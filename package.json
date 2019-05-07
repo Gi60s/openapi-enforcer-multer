@@ -1,0 +1,23 @@
+{
+  "name": "openapi-enforcer-multer",
+  "version": "0.0.1",
+  "description": "A middleware that wraps the npm multer package to prepare the request for the openapi-enforcer-middleware package.",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha test"
+  },
+  "keywords": [
+    "openapi",
+    "enforcer",
+    "middleware",
+    "multer"
+  ],
+  "author": "James Speirs <james.speirs@gmail.com>",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "express": "^4.16.4",
+    "multer": "^1.4.1",
+    "openapi-enforcer": "^1.2.3",
+    "openapi-enforcer-middleware": "^1.0.8"
+  }
+}

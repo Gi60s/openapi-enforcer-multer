@@ -1,0 +1,117 @@
+openapi: "3.0.0"
+info:
+  version: "1.0.0"
+  title: "File uploader"
+x-controller: people
+paths:
+  /people:
+    get:
+      summary: Get a list of all people (without pictures).
+      x-operation: list
+      responses:
+        200:
+          description: Retrieved a list of people.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PersonDownload'
+    post:
+      summary: Add a person to the system.
+      x-operation: add
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PersonUpload'
+      responses:
+        201:
+          description: Added a person
+          content:
+            multipart/form-data:
+              schema:
+                $ref: '#/components/schemas/PersonDownload'
+  /people/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: number
+    get:
+      summary: Get a person
+      x-operation: get
+      responses:
+        200:
+          description: Retrieved a person
+          content:
+            multipart/form-data:
+              schema:
+                $ref: '#/components/schemas/PersonDownload'
+        404:
+          description: Person not found
+    put:
+      summary: Update an existing person
+      x-operation: update
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PersonUpload'
+      responses:
+        200:
+          description: Added a person
+          content:
+            multipart/form-data:
+              schema:
+                $ref: '#/components/schemas/PersonDownload'
+    delete:
+      summary: Remove an existing user
+      x-operation: delete
+      responses:
+        204:
+          description: Deleted a person
+  /people/{id}/picture:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: number
+    get:
+      summary: Get a picture
+      x-operation: getPicture
+      responses:
+        200:
+          description: Retrieve a picture
+          content:
+            multipart/form-data:
+              schema:
+                type: string
+                format: binary
+components:
+  schemas:
+    PersonDownload:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        picture:
+          type: string
+          format: byte
+    PersonUpload:
+      type: object
+      properties:
+        name:
+          type: string
+        picture:
+          type: string
+          format: binary
+      required:
+        - name
+        - picture

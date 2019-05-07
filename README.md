@@ -21,6 +21,74 @@ npm install openapi-enforcer-multer
 
 For a more thorough example, please see the demo directory included with this package. It provides a simple API for adding people with pictures, getting those people, and downloading the picture in base64 and binary formats.
 
+## Open API Document Setup
+
+For this middleware to identify which parts of the body are files you need to configure your Open API document appropriately.
+
+### Open API 2.0
+
+- Your document root or the [operation](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#operationObject) must define the `consumes` property to use `multipart/form-data`.
+- You operation [parameters](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#parameterObject) `in` property must be set to `formData`.
+
+**Example Path for Open API Specification 2.0**
+
+```yml
+paths:
+  /people:
+    post:
+      summary: Add a person to the system.
+      x-controller: people
+      x-operation: add
+      consumes:
+        - multipart/form-data
+      parameters:
+        - in: formData
+          name: name
+          required: true
+          type: string
+        - in: formData
+          name: picture
+          required: true
+          type: file
+          format: byte
+      responses:
+        201:
+          description: Added a person
+```
+
+### Open API 3.x.x
+
+Your [operation request body](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.2.md#requestBodyObject) must define a content type of `multipart/form-data` with a schema that is an object with defined properties.
+
+**Example Path for Open API Specification 3.x.x**
+
+```yml
+paths:
+  /people:
+    post:
+      summary: Add a person to the system.
+      x-controller: people
+      x-operation: add
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                picture:
+                  type: string
+                  format: binary
+              required:
+                - name
+                - picture
+      responses:
+        201:
+          description: Added a person
+```
+
 ## Server Setup 
 
 ```js

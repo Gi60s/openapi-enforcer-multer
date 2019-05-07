@@ -30,7 +30,7 @@ paths:
         201:
           description: Added a person
           content:
-            multipart/form-data:
+            application/json:
               schema:
                 $ref: '#/components/schemas/PersonDownload'
   /people/{id}:
@@ -41,39 +41,17 @@ paths:
         schema:
           type: number
     get:
-      summary: Get a person
+      summary: Get a person as JSON with base64 encoded picture.
       x-operation: get
       responses:
         200:
           description: Retrieved a person
           content:
-            multipart/form-data:
+            application/json:
               schema:
                 $ref: '#/components/schemas/PersonDownload'
         404:
           description: Person not found
-    put:
-      summary: Update an existing person
-      x-operation: update
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PersonUpload'
-      responses:
-        200:
-          description: Added a person
-          content:
-            multipart/form-data:
-              schema:
-                $ref: '#/components/schemas/PersonDownload'
-    delete:
-      summary: Remove an existing user
-      x-operation: delete
-      responses:
-        204:
-          description: Deleted a person
   /people/{id}/picture:
     parameters:
       - in: path

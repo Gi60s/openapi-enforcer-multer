@@ -7,14 +7,13 @@ const multer = require('multer')
 const statuses = require('statuses')
 
 const app = express()
-app.use(express.json())
 
-const enforcer = Enforcer(path.resolve(__dirname, 'people.yml'))
-
-// this middleware will automatically run fallback mocks
+// initialize the enforcer
+const enforcer = Enforcer(path.resolve(__dirname, 'people-v2.yml')) // you can try people-v3.yml if you want (it does the same thing)
 enforcer.controllers(path.resolve(__dirname, 'controllers'))
   .catch(console.error)
 
+// initialize the multer
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 200000 }

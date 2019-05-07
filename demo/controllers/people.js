@@ -6,23 +6,18 @@ exports.add = function (req, res, next) {
   const person = {
     id: id++,
     name: req.body.name,
-    picture: req.body.picture
+    picture: req.files.picture
   }
   people.push(person)
   res.status(201).send({
     id: person.id,
     name: person.name,
-    picture: person.picture
+    picture: person.picture.buffer
   })
 }
 
-exports.delete = function (req, res, next) {
-  const index = people.findIndex(p => p.id === id)
-  if (index !== -1) people.splice(index, 1)
-  res.sendStatus(204)
-}
-
 exports.get = function (req, res, next) {
+  const id = req.params.id
   const person = people.find(p => p.id === id)
   if (!person) {
     res.sendStatus(404)
@@ -30,13 +25,22 @@ exports.get = function (req, res, next) {
     res.send({
       id: person.id,
       name: person.name,
-      picture: person.picture
+      picture: person.picture.buffer
     })
   }
 }
 
 exports.getPicture = function (req, res, next) {
-
+  const id = req.params.id
+  const person = people.find(p => p.id === id)
+  if (!person) {
+    res.sendStatus(404)
+  } else {
+    res.set('Content-Disposition', 'attachment; filename="' + person.picture.originalname + '"')
+    res.set('Content-Type', person.picture.mimeType)
+    res.write(person.picture.buffer)
+    res.end()
+  }
 }
 
 exports.list = function (req, res, next) {
@@ -47,14 +51,4 @@ exports.list = function (req, res, next) {
     }
   })
   res.send(list)
-}
-
-exports.update = function (req, res, next) {
-  const person = people.find(p => p.id === id)
-  if (!person) {
-    res.sendStatus(404)
-  } else {
-    person.name = req.body.name
-    person.picture = req.body.picture
-  }
 }

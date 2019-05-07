@@ -1,0 +1,79 @@
+swagger: "2.0"
+info:
+  version: "1.0.0"
+  title: "File uploader"
+x-controller: people
+paths:
+  /people:
+    get:
+      summary: Get a list of all people (without pictures).
+      x-operation: list
+      responses:
+        200:
+          description: Retrieved a list of people.
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/PersonDownload'
+    post:
+      summary: Add a person to the system.
+      x-operation: add
+      consumes:
+        - multipart/form-data
+      parameters:
+        - in: formData
+          name: name
+          required: true
+          type: string
+        - in: formData
+          name: picture
+          required: true
+          type: file
+          format: byte
+      responses:
+        201:
+          description: Added a person
+          schema:
+            $ref: '#/definitions/PersonDownload'
+  /people/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        type: number
+    get:
+      summary: Get a person as JSON with base64 encoded picture.
+      x-operation: get
+      responses:
+        200:
+          description: Retrieved a person
+          schema:
+            $ref: '#/definitions/PersonDownload'
+        404:
+          description: Person not found
+  /people/{id}/picture:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        type: number
+    get:
+      summary: Get a picture
+      x-operation: getPicture
+      responses:
+        200:
+          description: Retrieve a picture
+          schema:
+            type: string
+            format: binary
+definitions:
+  PersonDownload:
+    type: object
+    properties:
+      id:
+        type: number
+      name:
+        type: string
+      picture:
+        type: string
+        format: byte

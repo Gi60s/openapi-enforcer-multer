@@ -3,59 +3,73 @@ const Enforcer = require('openapi-enforcer-middleware')
 const enforcerMulter = require('../index')
 const expect = require('chai').expect
 const express = require('express')
+const fs = require('fs')
 const multer = require('multer')
+const path = require('path')
 const request = require('request')
 
-const contentMap = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+const files = {
+  image: path.resolve(__dirname, 'files', 'image.jpg'),
+  sound: path.resolve(__dirname, 'files', 'sound.mp3'),
+  text: path.resolve(__dirname, 'files', 'text.txt'),
+  video: path.resolve(__dirname, 'files', 'video.mp4')
+}
 
-describe('openapi-enforcer-multer', () => {
-
-  it('can upload a file', async () => {
-
-    const def = new Builder(2)
-      .addParameter('/', 'post', {
-        name: 'file',
-        in: 'formData',
-        type: 'string',
-        format: 'binary'
-      })
-      .build()
-
-    // initialize the multer
-    const upload = multer({
-      storage: multer.memoryStorage(),
-      limits: { fileSize: 200000 }
-    })
-
-
-    const { body, statusCode } = await server.once(def, upload, {
-      method: 'post',
-      path: '/',
-      body: {
-        file: createFile('file1.txt', 'text/plain', 100)
-      }
-    })
-
-    expect(statusCode).to.equal(200)
-
-  })
-
-})
-
-function createFile (fileName, contentType, fileSize) {
-  const array = []
-  for (let i = 0; i < fileSize; i++) {
-    array.push(contentMap[Math.floor(Math.random() * 62)])
+const v2Response = {
+  description: 'Response',
+  schema: {
+    type: 'array',
+    items: { type: 'string' }
   }
-  const buffer = Buffer.from(array)
-  return {
-    value: buffer,
-    options: {
-      fileName,
-      contentType
+}
+
+const v3Response = {
+  description: 'Response',
+  content: {
+    'application/json': {
+      schema: {
+        type: 'array',
+        items: { type: 'string' }
+      }
     }
   }
 }
+
+describe('openapi-enforcer-multer', () => {
+
+  describe('memory store', () => {
+    it('can upload a file', async () => {
+
+      const def = new Builder(2)
+        .addParameter('/', 'post', {
+          name: 'textFile',
+          in: 'formData',
+          type: 'file',
+          format: 'byte'
+        })
+        .addResponse('/', 'post', 200, v2Response)
+        .build()
+
+      // initialize the multer
+      const upload = multer({
+        storage: multer.memoryStorage(),
+        limits: { fileSize: 200000 }
+      })
+
+      const { body, statusCode } = await server.once(def, upload, {
+        method: 'post',
+        path: '/',
+        body: {
+          textFile: fs.createReadStream(files.text)
+        }
+      })
+
+      expect(body).to.deep.equal(['textFile'])
+      expect(statusCode).to.equal(200)
+    })
+  })
+
+})
 
 /**
  *
@@ -72,16 +86,21 @@ async function server (def, upload) {
   // link definition to controllers
   const controllers = {}
   def['x-controller'] = 'main'
-  Object.keys(def.paths).forEach((key, index) => {
-    const operationId = 'operation_' + index
-    def.paths[key]['x-operation'] = operationId
-    controllers[operationId] = function (req, res) {
-      res.sendStatus(200)
-    }
+  let operationIndex = 0
+  Object.keys(def.paths).forEach(key => {
+    const opKeys = Object.keys(def.paths[key])
+      .filter(v => ['get', 'post', 'put', 'delete'].includes(v))
+    opKeys.forEach(op => {
+      const operationId = 'operation_' + operationIndex++
+      def.paths[key][op]['x-operation'] = operationId
+      controllers[operationId] = function (req, res) {
+        res.status(200).send(Object.keys(req.body))
+      }
+    })
   })
 
   // set up enforcer middleware
-  const enforcer = await Enforcer(def)
+  const enforcer = Enforcer(def)
   await enforcer.controllers({ main: controllers })
 
   // apply middlewares
@@ -116,7 +135,8 @@ async function server (def, upload) {
         const options = {
           method,
           baseUrl: 'http://localhost:' + port,
-          uri: path
+          uri: path,
+          json: true
         }
         if (body !== undefined) {
           options.formData = body

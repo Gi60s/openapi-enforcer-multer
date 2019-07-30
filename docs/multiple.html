@@ -1,0 +1,225 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Open API Enforcer Multer | Multiple Multers</title>
+  <meta name="description" content="An Open API Enforcer plugin for multipart file uploads">
+
+  <link rel="icon" href="/openapi-enforcer-multer/favicon.png">
+
+  <link rel="stylesheet" href="/openapi-enforcer-multer/template-files/styles/main.css" media="all">
+  
+  
+  <link rel="stylesheet" href="/openapi-enforcer-multer/css/main.css" media="all">
+  
+  
+  
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="wrapper">
+      <a class="site-title" href="/openapi-enforcer-multer">
+        Open API Enforcer Multer
+      </a>
+
+      
+      <nav class="site-nav">
+        <a href="#" class="menu-icon" aria-label="Menu">
+          <svg viewBox="0 0 18 15">
+            <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+            <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+            <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+          </svg>
+        </a>
+      </nav>
+      
+    </div>
+  </header>
+
+<div class="page-content">
+  <div class="wrapper">
+
+    
+    <div class="nav-screen"></div>
+    <nav class="nav-list"><ul><li><a href="/openapi-enforcer-multer">Open API Enforcer Multer</a></li><li><a href="/openapi-enforcer-multer/single">Single Multer</a></li><li><a href="/openapi-enforcer-multer/multiple" class="current-page">Multiple Multers</a></li></ul></li></nav>
+    
+
+    <div class="page-content-main">
+      <article class="post">
+        <header class="post-header">
+          
+          <h1 class="post-title">Multiple Multers</h1>
+        </header>
+
+        
+        <div>
+          <p><strong>Page Content</strong></p>
+          <div class="section-nav"><ul class="toc"><li><a href="#open-api-document-setup">Open API Document Setup</a><ul><li><a href="#open-api-20">Open API 2.0</a></li><li><a href="#open-api-3xx">Open API 3.x.x</a></li></ul></li><li><a href="#server-setup">Server Setup</a></li><li><a href="#controller-setup">Controller Setup</a></li></ul></div>
+        </div>
+        
+
+        <div class="post-content"><h2 id="open-api-document-setup">Open API Document Setup</h2>
+<p>For this middleware to identify which parts of the body are files you need to configure your Open API document appropriately.</p>
+<h3 id="open-api-20">Open API 2.0</h3>
+<ul>
+<li>Your document root or the <a href="https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#operationObject">operation</a> must define the <code>consumes</code> property to use <code>multipart/form-data</code>.</li>
+<li>You operation <a href="https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#parameterObject">parameters</a> <code>in</code> property must be set to <code>formData</code>.</li>
+</ul>
+<p>Notice that the only variation here is that an <code>x-multer-key</code> property can be added to either the operation (<code>post</code>, <code>put</code>, etc) or to the path. The <code>x-multer-key</code> value will be used to identify which multer upload to use in the <a href="/openapi-enforcer-multer/multiple#server-setup">server setup</a>.</p>
+<p><strong>Example Path for Open API Specification 2.0</strong></p>
+<pre><code class="language-yml"><span class="hljs-attr">paths:</span>
+  <span class="hljs-string">/people:</span>
+<span class="hljs-attr">    post:</span>
+<span class="hljs-attr">      summary:</span> <span class="hljs-string">Add</span> <span class="hljs-string">a</span> <span class="hljs-string">person</span> <span class="hljs-string">to</span> <span class="hljs-string">the</span> <span class="hljs-string">system.</span>
+<span class="hljs-attr">      x-controller:</span> <span class="hljs-string">people</span>
+<span class="hljs-attr">      x-operation:</span> <span class="hljs-string">add</span>
+<span class="hljs-attr">      x-multer-key:</span> <span class="hljs-string">picturesUpload</span>
+<span class="hljs-attr">      consumes:</span>
+<span class="hljs-bullet">        -</span> <span class="hljs-string">multipart/form-data</span>
+<span class="hljs-attr">      parameters:</span>
+<span class="hljs-attr">        - in:</span> <span class="hljs-string">formData</span>
+<span class="hljs-attr">          name:</span> <span class="hljs-string">name</span>
+<span class="hljs-attr">          required:</span> <span class="hljs-literal">true</span>
+<span class="hljs-attr">          type:</span> <span class="hljs-string">string</span>
+<span class="hljs-attr">        - in:</span> <span class="hljs-string">formData</span>
+<span class="hljs-attr">          name:</span> <span class="hljs-string">picture</span>
+<span class="hljs-attr">          required:</span> <span class="hljs-literal">true</span>
+<span class="hljs-attr">          type:</span> <span class="hljs-string">file</span>
+<span class="hljs-attr">          format:</span> <span class="hljs-string">byte</span>
+<span class="hljs-attr">      responses:</span>
+        <span class="hljs-number">201</span><span class="hljs-string">:</span>
+<span class="hljs-attr">          description:</span> <span class="hljs-string">Added</span> <span class="hljs-string">a</span> <span class="hljs-string">person</span></code></pre>
+<h3 id="open-api-3xx">Open API 3.x.x</h3>
+<p>Your <a href="https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.2.md#requestBodyObject">operation request body</a> must define a content type of <code>multipart/form-data</code> with a schema that is an object with defined properties.</p>
+<p><strong>Example Path for Open API Specification 3.x.x</strong></p>
+<pre><code class="language-yml"><span class="hljs-attr">paths:</span>
+  <span class="hljs-string">/people:</span>
+<span class="hljs-attr">    post:</span>
+<span class="hljs-attr">      summary:</span> <span class="hljs-string">Add</span> <span class="hljs-string">a</span> <span class="hljs-string">person</span> <span class="hljs-string">to</span> <span class="hljs-string">the</span> <span class="hljs-string">system.</span>
+<span class="hljs-attr">      x-controller:</span> <span class="hljs-string">people</span>
+<span class="hljs-attr">      x-operation:</span> <span class="hljs-string">add</span>
+<span class="hljs-attr">      x-multer-key:</span> <span class="hljs-string">picturesUpload</span>
+<span class="hljs-attr">      requestBody:</span>
+<span class="hljs-attr">        required:</span> <span class="hljs-literal">true</span>
+<span class="hljs-attr">        content:</span>
+          <span class="hljs-string">multipart/form-data:</span>
+<span class="hljs-attr">            schema:</span>
+<span class="hljs-attr">              type:</span> <span class="hljs-string">object</span>
+<span class="hljs-attr">              properties:</span>
+<span class="hljs-attr">                name:</span>
+<span class="hljs-attr">                  type:</span> <span class="hljs-string">string</span>
+<span class="hljs-attr">                picture:</span>
+<span class="hljs-attr">                  type:</span> <span class="hljs-string">string</span>
+<span class="hljs-attr">                  format:</span> <span class="hljs-string">binary</span>
+<span class="hljs-attr">              required:</span>
+<span class="hljs-bullet">                -</span> <span class="hljs-string">name</span>
+<span class="hljs-bullet">                -</span> <span class="hljs-string">picture</span>
+<span class="hljs-attr">      responses:</span>
+        <span class="hljs-number">201</span><span class="hljs-string">:</span>
+<span class="hljs-attr">          description:</span> <span class="hljs-string">Added</span> <span class="hljs-string">a</span> <span class="hljs-string">person</span></code></pre>
+<h2 id="server-setup">Server Setup</h2>
+<pre><code class="language-js"><span class="hljs-keyword">const</span> express = <span class="hljs-built_in">require</span>(<span class="hljs-string">'express'</span>)
+<span class="hljs-keyword">const</span> Enforcer = <span class="hljs-built_in">require</span>(<span class="hljs-string">'openapi-enforcer-middleware'</span>)
+<span class="hljs-keyword">const</span> enforcerMulter = <span class="hljs-built_in">require</span>(<span class="hljs-string">'openapi-enforcer-multer'</span>)
+<span class="hljs-keyword">const</span> path = <span class="hljs-built_in">require</span>(<span class="hljs-string">'path'</span>)
+<span class="hljs-keyword">const</span> multer = <span class="hljs-built_in">require</span>(<span class="hljs-string">'multer'</span>)
+
+<span class="hljs-keyword">const</span> app = express()
+
+<span class="hljs-comment">// initialize the enforcer</span>
+<span class="hljs-keyword">const</span> enforcer = Enforcer(path.resolve(__dirname, <span class="hljs-string">'people-v2.yml'</span>))
+enforcer.controllers(path.resolve(__dirname, <span class="hljs-string">'controllers'</span>))
+  .catch(<span class="hljs-built_in">console</span>.error)
+
+<span class="hljs-comment">// initialize the multer uploads</span>
+<span class="hljs-keyword">const</span> uploads = {
+  <span class="hljs-comment">// a multer memory store upload location</span>
+  memoryUpload: multer({
+    <span class="hljs-attr">storage</span>: multer.memoryStorage(),
+    <span class="hljs-attr">limits</span>: { <span class="hljs-attr">fileSize</span>: <span class="hljs-number">10000</span> }
+  }),
+
+  <span class="hljs-comment">// a multer file store upload location</span>
+  picturesUpload: multer({
+     <span class="hljs-attr">storage</span>: multer.diskStorage({
+       <span class="hljs-attr">destination</span>: <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">req, file, cb</span>) </span>{
+         cb(<span class="hljs-literal">null</span>, <span class="hljs-string">'/path/to/pictures'</span>)
+       },
+       <span class="hljs-attr">filename</span>: <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">req, file, cb</span>) </span>{
+         <span class="hljs-keyword">const</span> name = req.body.name
+         cb(<span class="hljs-literal">null</span>, name)
+       }
+     }),
+     <span class="hljs-attr">limits</span>: { <span class="hljs-attr">fileSize</span>: <span class="hljs-number">200000</span> }
+  })
+} 
+
+<span class="hljs-comment">// add enforcer multer middleware with directed uploads</span>
+app.use(enforcerMulter(enforcer, uploads, { <span class="hljs-attr">directedUploads</span>: <span class="hljs-literal">true</span> }))
+
+<span class="hljs-comment">// add the enforcer middleware runner to the express app</span>
+app.use(enforcer.middleware())
+
+<span class="hljs-keyword">const</span> listener = app.listen(<span class="hljs-number">3000</span>, err =&gt; {
+  <span class="hljs-keyword">if</span> (err) <span class="hljs-keyword">return</span> <span class="hljs-built_in">console</span>.error(err.stack)
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Server listening on port '</span> + listener.address().port)
+})</code></pre>
+<h2 id="controller-setup">Controller Setup</h2>
+<p>This example assumes that you&#39;ve set up a controller with the <a href="https://www.npmjs.com/package/openapi-enforcer-middleware">openapi-enforcer-middleware</a>. If you are not using the <a href="https://www.npmjs.com/package/openapi-enforcer-middleware">openapi-enforcer-middleware</a> package then much of this will still apply.</p>
+<p>Within your controller the <code>req.body</code> will have the uploaded file buffer if multer&#39;s MemoryStorage is being used. In either case, you will still have access to the full multer file object through <code>req.files</code>.</p>
+<pre><code class="language-js">exports.add = <span class="hljs-keyword">async</span> <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">req, res, next</span>) </span>{
+  <span class="hljs-keyword">const</span> person = {
+    <span class="hljs-attr">id</span>: id++,
+    <span class="hljs-attr">name</span>: req.body.name,
+    <span class="hljs-attr">picture</span>: req.files.picture
+  }
+  <span class="hljs-keyword">await</span> savePersonToDatabase(person)
+  res.status(<span class="hljs-number">201</span>)
+    .send({
+        <span class="hljs-attr">id</span>: person.id,
+        <span class="hljs-attr">name</span>: person.name,
+        <span class="hljs-attr">picture</span>: person.picture.buffer
+      })
+}</code></pre>
+</div>
+      </article>
+
+      <footer class="site-footer">
+
+        
+        <p>
+          Caught a mistake or want to contribute to the documentation?
+          <a href="https://github.com/byu-oit/openapi-enforcer-multer/tree/master/docs-src/multiple.md" target="_blank" rel="noopener">Edit this page on Github</a>
+        </p>
+        
+
+        
+
+        
+        <div class="footer-links">
+          
+          <div><a href="https://github.com/byu-oit/openapi-enforcer-multer" target="_blank" rel="noopener">Github</a></div>
+          
+          <div><a href="https://www.npmjs.com/package/openapi-enforcer-multer" target="_blank" rel="noopener">NPM</a></div>
+          
+        </div>
+        
+
+      </footer>
+    </div>
+
+  </div>
+</div>
+
+
+<script src="/openapi-enforcer-multer/template-files/js/main.js"></script>
+
+</body>
+
+</html>

@@ -1,7 +1,10 @@
 const methods = ['delete', 'get', 'head', 'options', 'patch', 'post', 'put', 'trace']
 
-module.exports = function (enforcer, upload) {
+module.exports = function (enforcer, upload, options) {
   const map = new WeakMap()
+
+  if (!options) options = {}
+  if (!options.hasOwnProperty('directedUploads')) options.directedUploads = false
 
   const promise = enforcer.promise
     .then(openapi => {
@@ -24,7 +27,7 @@ module.exports = function (enforcer, upload) {
                       .forEach(param => {
                         schema.properties[param.name] = param.schema
                       })
-                    buildMulterFields(schema, operation, map, upload)
+                    buildMulterFields(schema, operation, map, upload, options)
                   }
 
                 // v3
@@ -32,7 +35,7 @@ module.exports = function (enforcer, upload) {
                   const schema = operation.requestBody.content &&
                     operation.requestBody.content['multipart/form-data'] &&
                     operation.requestBody.content['multipart/form-data'].schema
-                  buildMulterFields(schema, operation, map, upload)
+                  buildMulterFields(schema, operation, map, upload, options)
                 }
               }
             })
@@ -59,6 +62,7 @@ module.exports = function (enforcer, upload) {
         } else {
 
           // run the multer middleware
+          Object.assign(req.params, path.params)
           multer.middleware(req, res, function (err) {
             if (err) return next(err)
 
@@ -83,9 +87,19 @@ module.exports = function (enforcer, upload) {
   }
 }
 
-function buildMulterFields (schema, operation, map, upload) {
+function buildMulterFields (schema, operation, map, uploadMap, { directedUploads }) {
   if (schema && schema.type === 'object' && schema.properties) {
     const fields = []
+    const multerKey = directedUploads
+      ? operation['x-multer-key'] || operation.enforcerData.parent.result['x-multer-key']
+      : ''
+    const upload = multerKey
+      ? uploadMap[multerKey]
+      : uploadMap
+
+    if (!upload && multerKey) throw Error('Unable to find multer definition with the specified key: ' + multerKey)
+    if (!upload) throw Error('Invalid multer object provided')
+
     Object.keys(schema.properties).forEach(key => {
       const item = schema.properties[key]
       if (item.type === 'array' && item.items && schemaIsFileType(item.items)) {
@@ -108,57 +122,3 @@ function buildMulterFields (schema, operation, map, upload) {
 function schemaIsFileType (schema) {
   return schema.type === 'string' && (schema.format === 'byte' || schema.format === 'binary')
 }
-
-//
-// function foo () {
-//   if (req.hasOwnProperty('body')) {
-//     let value = req.body;
-//
-//     // v2 parameter in body
-//     if (parameters.body) {
-//       const parameter = getBodyParameter(parameters);
-//       value = primitiveBodyDeserialization(value, parameter.schema);
-//       deserializeAndValidate(exception.nest('In body'), parameter.schema, { value }, value => {
-//         result.body = Value.extract(value);
-//       });
-//
-//       // v3 requestBody
-//     } else if (this.requestBody) {
-//       const contentType = req.header.hasOwnProperty('content-type') ? req.header['content-type'].split(';')[0].trim() : '*/*';
-//       const content = this.requestBody.content;
-//       const mediaTypes = Object.keys(content);
-//       const matches = util.findMediaMatch(contentType, mediaTypes);
-//       const length = matches.length;
-//
-//       // one or more potential matches
-//       if (length) {
-//         const child = new Exception('In body');
-//
-//         // find the first media type that matches the request body
-//         let passed = false;
-//         for (let i = 0; i < length; i++) {
-//           const mediaType = matches[i];
-//           const media = content[mediaType];
-//           if (media.schema) {
-//             value = primitiveBodyDeserialization(value, media.schema);
-//             deserializeAndValidate(child.nest('For Content-Type ' + mediaType), media.schema, { value }, value => {
-//               result.body = Value.extract(value);
-//               passed = true;
-//             });
-//           }
-//
-//           // if the media type was an exact match or if the schema passed then stop executing
-//           if (contentType === mediaType || passed) break;
-//         }
-//
-//         // if nothing passed then add all exceptions
-//         if (!passed) exception.push(child);
-//
-//       } else {
-//         exception.message('Content-Type not accepted');
-//       }
-//
-//     } else if (!parameters.formData) {
-//       exception.message('Body is not allowed');
-//     }
-// }

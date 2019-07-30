@@ -62,6 +62,7 @@ module.exports = function (enforcer, upload, options) {
         } else {
 
           // run the multer middleware
+          Object.assign(req.params, path.params)
           multer.middleware(req, res, function (err) {
             if (err) return next(err)
 

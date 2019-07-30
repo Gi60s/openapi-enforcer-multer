@@ -12,3 +12,7 @@ This package works along side the [multer](https://www.npmjs.com/package/multer)
     - MemoryStorage
 
 - Automatically builds multer field definitions from your Open API document.
+
+## Documentation
+
+https://byu-oit.github.io/openapi-enforcer-multer/

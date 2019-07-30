@@ -1,7 +1,10 @@
 const methods = ['delete', 'get', 'head', 'options', 'patch', 'post', 'put', 'trace']
 
-module.exports = function (enforcer, upload) {
+module.exports = function (enforcer, upload, options) {
   const map = new WeakMap()
+
+  if (!options) options = {}
+  if (!options.hasOwnProperty('directedUploads')) options.directedUploads = false
 
   const promise = enforcer.promise
     .then(openapi => {
@@ -24,7 +27,7 @@ module.exports = function (enforcer, upload) {
                       .forEach(param => {
                         schema.properties[param.name] = param.schema
                       })
-                    buildMulterFields(schema, operation, map, upload)
+                    buildMulterFields(schema, operation, map, upload, options)
                   }
 
                 // v3
@@ -32,7 +35,7 @@ module.exports = function (enforcer, upload) {
                   const schema = operation.requestBody.content &&
                     operation.requestBody.content['multipart/form-data'] &&
                     operation.requestBody.content['multipart/form-data'].schema
-                  buildMulterFields(schema, operation, map, upload)
+                  buildMulterFields(schema, operation, map, upload, options)
                 }
               }
             })
@@ -83,9 +86,19 @@ module.exports = function (enforcer, upload) {
   }
 }
 
-function buildMulterFields (schema, operation, map, upload) {
+function buildMulterFields (schema, operation, map, uploadMap, { directedUploads }) {
   if (schema && schema.type === 'object' && schema.properties) {
     const fields = []
+    const multerKey = directedUploads
+      ? operation['x-multer-key'] || operation.enforcerData.parent.result['x-multer-key']
+      : ''
+    const upload = multerKey
+      ? uploadMap[multerKey]
+      : uploadMap
+
+    if (!upload && multerKey) throw Error('Unable to find multer definition with the specified key: ' + multerKey)
+    if (!upload) throw Error('Invalid multer object provided')
+
     Object.keys(schema.properties).forEach(key => {
       const item = schema.properties[key]
       if (item.type === 'array' && item.items && schemaIsFileType(item.items)) {

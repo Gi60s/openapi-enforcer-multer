@@ -36,18 +36,6 @@ const v2Response = {
   }
 }
 
-const v3Response = {
-  description: 'Response',
-  content: {
-    'application/json': {
-      schema: {
-        type: 'array',
-        items: { type: 'string' }
-      }
-    }
-  }
-}
-
 describe('openapi-enforcer-multer', () => {
 
   describe('memory store', () => {
@@ -120,11 +108,17 @@ describe('openapi-enforcer-multer', () => {
       const def = new Builder(2)
         .addParameter('/mem', 'post', v2Parameter)
         .addResponse('/mem', 'post', 200, v2Response)
-        .addParameter('/files', 'post', v2Parameter)
-        .addResponse('/files', 'post', 200, v2Response)
+        .addParameter('/files/{id}', 'post', v2Parameter)
+        .addParameter('/files/{id}', 'post', {
+          name: 'id',
+          in: 'path',
+          required: true,
+          type: 'integer'
+        })
+        .addResponse('/files/{id}', 'post', 200, v2Response)
         .build()
       def.paths['/mem']['x-multer-key'] = 'mem'
-      def.paths['/files'].post['x-multer-key'] = 'files'
+      def.paths['/files/{id}'].post['x-multer-key'] = 'files'
 
       // initialize the multer
       const uploadMemory = multer({
@@ -165,7 +159,7 @@ describe('openapi-enforcer-multer', () => {
 
       const result2 = await s.request({
         method: 'post',
-        path: '/files',
+        path: '/files/1234',
         body: {
           textFile: fs.createReadStream(files.text)
         }

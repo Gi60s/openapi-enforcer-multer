@@ -1,6 +1,6 @@
 {
   "name": "openapi-enforcer-multer",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A middleware that wraps the npm multer package to prepare the request for the openapi-enforcer-middleware package.",
   "main": "index.js",
   "scripts": {

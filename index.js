@@ -68,7 +68,7 @@ module.exports = function (enforcer, upload, options) {
 
             // copy multer's "files" to body
             req.body = Object.assign({}, req.body)
-            Object.keys(req.files).forEach(key => {
+            Object.keys(req.files || []).forEach(key => {
               const files = req.files[key]
               const prop = multer.schema.properties[key]
               if (prop.type === 'array') {

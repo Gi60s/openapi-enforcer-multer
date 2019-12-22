@@ -67,7 +67,7 @@ module.exports = function (enforcer, upload, options) {
                         if (err) return next(err)
 
                         // to correctly apply modification only for form-data type
-                        if (!req.is('json')) {
+                        if (req.is('multipart')) {
                             // copy multer's "files" to body
                             req.body = Object.assign({}, req.body)
                             Object.keys(req.files || []).forEach(key => {

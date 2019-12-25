@@ -90,33 +90,68 @@ module.exports = function (enforcer, upload, options) {
   }
 }
 
+// Credits to JacobLey : https://github.com/cdimascio/express-openapi-validator/pull/187
+const schemaHasObject = schema =>
+    schema && (
+        schema.type === 'object' ||
+        [].concat(
+            schema.allOf,
+            schema.oneOf,
+            schema.anyOf
+        ).some(schemaHasObject)
+    );
+
+// for nested levels, we need to deep flat given array
+const flatDeep = arr => arr.reduce((acc, val) => acc.concat(Array.isArray(val) ? flatDeep(val) : val), []);
+
+function merge_properties(schema) {
+  if (schema.properties) {
+    return schema.properties;
+  } else {
+    return [schema.oneOf, schema.allOf, schema.anyOf]
+        .filter(s => s !== undefined)
+        .map(subschema => subschema.map(s => merge_properties(s)) )
+        .reduce( (acc, subproperties) => {
+          return Object.assign(acc, ...flatDeep(subproperties));
+        }, {});
+  }
+}
+
 function buildMulterFields(schema, operation, map, uploadMap, {directedUploads}) {
-  if (schema && schema.type === 'object' && schema.properties) {
-    const fields = []
+  const isObject = schemaHasObject(schema)
+  const properties = (isObject)
+      ? (schema.properties)
+          ? schema.properties
+          : merge_properties(schema)
+      : undefined;
+  if (schema && isObject && properties) {
+    // To deal with all cases, lets be sure schema object has a "properties" field
+    const masterSchema = (schema.hasOwnProperty("properties")) ? schema : {"properties": properties};
+    const fields = [];
     const multerKey = directedUploads
-      ? operation['x-multer-key'] || operation.enforcerData.parent.result['x-multer-key']
-      : ''
+        ? operation['x-multer-key'] || operation.enforcerData.parent.result['x-multer-key']
+        : '';
     const upload = multerKey
-      ? uploadMap[multerKey]
-      : uploadMap
+        ? uploadMap[multerKey]
+        : uploadMap;
 
     if (!upload && multerKey) throw Error('Unable to find multer definition with the specified key: ' + multerKey)
-    if (!upload) throw Error('Invalid multer object provided')
+    if (!upload) throw Error('Invalid multer object provided');
 
-    Object.keys(schema.properties).forEach(key => {
-      const item = schema.properties[key]
+    Object.keys(properties).forEach(key => {
+      const item = properties[key];
       if (item.type === 'array' && item.items && schemaIsFileType(item.items)) {
-        const config = {name: key}
+        const config = {name: key};
         if (item.hasOwnProperty('maxItems')) config.maxCount = item.maxItems
         fields.push(config)
       } else if (schemaIsFileType(item)) {
         fields.push({name: key, maxCount: 1})
       }
-    })
+    });
     if (fields.length) {
       map.set(operation, {
         middleware: upload.fields(fields),
-        schema
+        schema: masterSchema
       })
     }
   }

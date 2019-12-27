@@ -102,7 +102,7 @@ describe('openapi-enforcer-multer', () => {
 
   describe('multi store', () => {
 
-    it.only('can upload a file', async () => {
+    it('can upload a file', async () => {
       const savedFileNames = []
 
       const def = new Builder(2)

@@ -68,27 +68,30 @@ module.exports = function (enforcer, upload, options) {
 
             // to correctly apply modification only for form-data type
             if (req.is('multipart')) {
-              req.body = prepareBody(req.body);
+              if (!req.body) req.body = {}
+              req.body = prepareBody(req.body)
               Object.keys(req.body).forEach(key => {
                 const prop = multer.schema.properties[key]
                 if (prop) {
                   const [val, err] = prop.deserialize(req.body[key], { strict: false })
                   if (!err) req.body[key] = val
                 }
-              });
+              })
 
               // copy multer's "files" to body
-              Object.keys(req.files).forEach(key => {
-                const files = req.files[key]
-                const prop = multer.schema.properties[key]
-                if (prop.type === 'array') {
-                  req.body[key] = files.map(file => file.buffer || Buffer.allocUnsafe(file.size))
-                } else if (files.length) {
-                  const file = files[files.length - 1]
-                  req.body[key] = file.buffer || Buffer.allocUnsafe(file.size)
-                  req.files[key] = file
-                }
-              })
+              if (req.files) {
+                Object.keys(req.files).forEach(key => {
+                  const files = req.files[key]
+                  const prop = multer.schema.properties[key]
+                  if (prop.type === 'array') {
+                    req.body[key] = files.map(file => file.buffer || Buffer.allocUnsafe(file.size))
+                  } else if (files.length) {
+                    const file = files[files.length - 1]
+                    req.body[key] = file.buffer || Buffer.allocUnsafe(file.size)
+                    req.files[key] = file
+                  }
+                })
+              }
             }
             next()
           })
@@ -107,21 +110,21 @@ const schemaHasObject = schema =>
             schema.oneOf,
             schema.anyOf
         ).some(schemaHasObject)
-    );
+    )
 
 // for nested levels, we need to deep flat given array
 const flatDeep = arr => arr.reduce((acc, val) => acc.concat(Array.isArray(val) ? flatDeep(val) : val), []);
 
 function merge_properties(schema) {
   if (schema.properties) {
-    return schema.properties;
+    return schema.properties
   } else {
     return [schema.oneOf, schema.allOf, schema.anyOf]
         .filter(s => s !== undefined)
         .map(subschema => subschema.map(s => merge_properties(s)) )
         .reduce( (acc, subproperties) => {
-          return Object.assign(acc, ...flatDeep(subproperties));
-        }, {});
+          return Object.assign(acc, ...flatDeep(subproperties))
+        }, {})
   }
 }
 

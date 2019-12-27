@@ -68,9 +68,17 @@ module.exports = function (enforcer, upload, options) {
 
             // to correctly apply modification only for form-data type
             if (req.is('multipart')) {
+              req.body = prepareBody(req.body);
+              Object.keys(req.body).forEach(key => {
+                const prop = multer.schema.properties[key]
+                if (prop) {
+                  const [val, err] = prop.deserialize(req.body[key], { strict: false })
+                  if (!err) req.body[key] = val
+                }
+              });
+
               // copy multer's "files" to body
-              req.body = Object.assign({}, req.body)
-              Object.keys(req.files || []).forEach(key => {
+              Object.keys(req.files).forEach(key => {
                 const files = req.files[key]
                 const prop = multer.schema.properties[key]
                 if (prop.type === 'array') {
@@ -119,6 +127,20 @@ function buildMulterFields(schema, operation, map, uploadMap, {directedUploads})
         schema
       })
     }
+  }
+}
+
+function prepareBody (value) {
+  if (Array.isArray(value)) {
+    return value.map(v => prepareBody(v))
+  } else if (value && typeof value === 'object') {
+    const result = {}
+    Object.keys(value).forEach(key => {
+      result[key] = prepareBody(value[key])
+    })
+    return result
+  } else {
+    return value
   }
 }
 

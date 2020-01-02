@@ -51,6 +51,7 @@ module.exports = function (enforcer, upload, options) {
 
         // get the x-multer property off the operation instance for the request
         const [path] = openapi.path(req.method, req.path)
+        if (!path) return next(); // path is not documented in the OpenAPI document, pass to next middleware.
         const operation = path.operation
         const multer = map.get(operation)
 

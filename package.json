@@ -21,7 +21,7 @@
     "@gi60s/markdown-docs": "0.0.10",
     "chai": "^4.2.0",
     "express": "^4.17.1",
-    "mocha": "^6.2.0",
+    "mocha": "^10.2.0",
     "multer": "^1.4.2",
     "openapi-enforcer": "^1.7.0",
     "openapi-enforcer-middleware": "^1.1.5",
